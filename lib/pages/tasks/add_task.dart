@@ -1,75 +1,98 @@
 import 'package:flutter/material.dart';
-import 'package:solocoding2019_base/db/dbHelper.dart';
-import 'package:solocoding2019_base/models/Tasks.dart';
+import 'package:solocoding2019_base/bloc/bloc_provider.dart';
+import 'package:solocoding2019_base/pages/tasks/bloc/add_task_bloc.dart';
+import 'package:solocoding2019_base/utils/date_util.dart';
+import 'package:solocoding2019_base/models/priority.dart';
 
-class AddTaskScreen extends StatefulWidget {
-  @override
-  State<StatefulWidget> createState() => _AddTaskState();
-}
-
-DateTime now = DateTime.now();
-
-class _AddTaskState extends State<AddTaskScreen> {
-
-  TextEditingController txtTitle = new TextEditingController();
-  String validateText = "";
-
-  DbHelper dbHelper = new DbHelper();
-  String createDate = "${now.day}.${now.month}.${now.year}";
+class AddTaskScreen extends StatelessWidget {
+  final GlobalKey<ScaffoldState> _scaffoldState =
+      GlobalKey<ScaffoldState>();
+  final GlobalKey<FormState> _formState =
+      GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
+    AddTaskBloc createTaskBloc = BlocProvider.of(context);
     return Scaffold(
+      key: _scaffoldState,
       appBar: AppBar(
-        title: Text('Add Task'),
-        centerTitle: true,
-        backgroundColor: Colors.pink,
+        title: Text("Add Task"),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(
+              Icons.done, color: Colors.white, size: 28.0,
+            ),
+            onPressed: () {
+              if (_formState.currentState.validate()) {
+                _formState.currentState.save();
+                createTaskBloc.createTask().listen((value) {
+                  Navigator.pop(context, true);
+                });
+              }
+            },
+          )
+        ],
       ),
-      body: Padding(
-        padding: EdgeInsets.all(20.0),
-        child: Column(
-          children: <Widget>[
-            TextField(
-              controller: txtTitle,
-              decoration: InputDecoration(labelText: "할 일을 입력하세요."),
-            ),
-            Divider(
-              color: Colors.white,
-              height: 20.0,
-            ),
-            Text("$validateText", style: TextStyle(color: Colors.red),),
-            ButtonTheme(
-              minWidth: 200.0,
-              height: 50.0,
-              child: RaisedButton(
-                child: Text("확인"),
-                textColor: Colors.white,
-                color: Colors.blue,
-                elevation: 4.0,
-                splashColor: Colors.blueGrey,
-                onPressed: () {
-                  save();
+      body: ListView(
+        children: <Widget>[
+          Form(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                validator: (value) {
+                  var msg = value.isEmpty ? "Title Cannot be Empty" : null;
+                  return msg;
                 },
+                onSaved: (value) {
+                  createTaskBloc.updateTitle = value;
+                },
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                decoration: InputDecoration(hintText: "Title"),
               ),
             ),
-          ],
-        ),
+            key: _formState,
+          ),
+//          ListTile(
+//            leading: Icon(Icons.calendar_today),
+//            title: Text("Due Date"),
+//            subtitle: StreamBuilder(
+//              stream: createTaskBloc.duDateSelected,
+//              initialData: DateTime.now().millisecondsSinceEpoch,
+//              builder: (context, snapshot) =>
+//                  Text(getFormattedDate(snapshot.data)),
+//            ),
+//            onTap: () {
+//
+//            },
+//          ),
+//          ListTile(
+//            leading: Icon(Icons.flag),
+//            title: Text("Priority"),
+//            subtitle: StreamBuilder(
+//              stream: createTaskBloc.prioritySelected,
+//              initialData: Status.PRIORITY_4,
+//              builder: (context, snapshot) =>
+//                  Text(priorityText[snapshot.data.index]),
+//            ),
+//            onTap: () {
+//
+//            },
+//          ),
+        ],
       ),
+//      floatingActionButton: FloatingActionButton(
+//        child: Icon(Icons.send, color: Colors.white),
+//        onPressed: () {
+//          if (_formState.currentState.validate()) {
+//            _formState.currentState.save();
+//            createTaskBloc.createTask().listen((value) {
+//              Navigator.pop(context, true);
+//            });
+//          }
+//        },
+//      ),
     );
-  }
-
-  void save() async {
-    if (txtTitle.text.length >= 2 && txtTitle.text.length <= 30) {
-      int result = await dbHelper.insert(Tasks(txtTitle.text, createDate, "completed"));
-      validateText = '';
-      if (result != 0) {
-        Navigator.pop(context, true);
-      }
-    } else {
-      setState(() {
-        validateText = '필수 입력 항목입니다.';
-      });
-    }
   }
 
 }

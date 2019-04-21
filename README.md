@@ -1,7 +1,7 @@
+(20/0/5)
+
 # solocoding2019_base
 Base Project for solocoding
-
-(20/0/5)
 
 ## 할 일 관리
 - [x] 1. 간단하게 할일을 추가할 수 있어야 한다.
